@@ -19,6 +19,16 @@ Usage of cwli:
 
 ```
 $ cwli
+ap-northeast-1> help;
+help
+	Print a help message
+show groups [prefix LOG-GROUP-PREFIX]
+	Display Log Groups
+head LOG-GROUP [limit N]
+	Print first lines of a Log Group
+source LOG-GROUP start=START-TIME end=END-TIME | field ... [! EXTERNAL-COMMAND]
+	Perform CloudWatch Logs Insights query
+  
 ap-northeast-1> show groups;
 /aws/kinesisfirehose/my-kinesis
 /aws/lambda/my-lambda
