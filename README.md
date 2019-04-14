@@ -2,6 +2,8 @@
 
 cwli is [CloudWatch Logs Insights](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/AnalyzingLogData.html) Command-Line Client.
 
+see https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
+
 ## Usage
 
 ```
