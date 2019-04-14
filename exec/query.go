@@ -18,17 +18,19 @@ import (
 
 const queryWaitInterval = 1
 
-var regexpWuery = regexp.MustCompile(`(?i)^source\s+(\S+)\s+start=(\S+)\s+end=(\S+)\s*\|\s*(.+)$`)
+var regexpQuery = regexp.MustCompile(`(?i)^source\s+(\S+)\s+start=(\S+)\s+end=(\S+)\s*\|\s*(.+)$`)
+var regexpQueryVertically = regexp.MustCompile(`(?i)\|\s*vertically\s*$`)
 
 type queryCommand struct {
 	logGroupName string
 	queryString  string
 	startTime    int64
 	endTime      int64
+	vertically   bool
 }
 
 func parseQuery(str string) (cmd Executable, err error) {
-	submatch := regexpWuery.FindStringSubmatch(str)
+	submatch := regexpQuery.FindStringSubmatch(str)
 
 	if len(submatch) == 0 {
 		err = fmt.Errorf("Invalid query: %s", str)
@@ -37,6 +39,13 @@ func parseQuery(str string) (cmd Executable, err error) {
 
 	logGroupName := submatch[1]
 	queryString := strings.TrimSpace(submatch[4])
+	vertically := false
+
+	if regexpQueryVertically.MatchString(queryString) {
+		queryString = regexpQueryVertically.ReplaceAllString(queryString, "")
+		queryString = strings.TrimSpace(queryString)
+		vertically = true
+	}
 
 	var startTime, endTime time.Time
 	startTime, err = dateparse.ParseLocal(submatch[2])
@@ -58,6 +67,7 @@ func parseQuery(str string) (cmd Executable, err error) {
 		queryString:  queryString,
 		startTime:    startTime.Unix(),
 		endTime:      endTime.Unix(),
+		vertically:   vertically,
 	}
 
 	return
@@ -112,15 +122,31 @@ func escapeJson(str string) string {
 	return string(b)
 }
 
-func printQueryResult(result *cloudwatchlogs.GetQueryResultsOutput, showptr bool, out io.Writer) {
-	if len(result.Results) > 0 {
-		fieldLen := len(result.Results[0])
+func printResultsVertically(results [][]*cloudwatchlogs.ResultField, showptr bool, out io.Writer) {
+	if len(results) > 0 {
+		for i, result := range results {
+			fmt.Fprintf(out, "*************************** %d. row ***************************\n", i+1)
+
+			for _, field := range result {
+				if !showptr && *field.Field == "@ptr" {
+					continue
+				}
+
+				fmt.Fprintf(out, "%s:\t%s\n", *field.Field, *field.Value)
+			}
+		}
+	}
+}
+
+func printResultsHorizontally(results [][]*cloudwatchlogs.ResultField, showptr bool, out io.Writer) {
+	if len(results) > 0 {
+		fieldLen := len(results[0])
 
 		if !showptr {
 			fieldLen--
 		}
 
-		for _, result := range result.Results {
+		for _, result := range results {
 			fmt.Fprint(out, "{")
 
 			for i, field := range result {
@@ -140,16 +166,6 @@ func printQueryResult(result *cloudwatchlogs.GetQueryResultsOutput, showptr bool
 			fmt.Fprintln(out, "}")
 		}
 	}
-
-	fmt.Fprintf(out, "// Status: %s\n", *result.Status)
-
-	fmt.Fprintf(
-		out,
-		"// Statistics: BytesScanned=%.f RecordsMatched=%.f RecordsScanned=%.f\n",
-		*result.Statistics.BytesScanned,
-		*result.Statistics.RecordsMatched,
-		*result.Statistics.RecordsScanned,
-	)
 }
 
 func (cmd *queryCommand) Start(svc *cloudwatchlogs.CloudWatchLogs, flags *cli.Flags, out io.Writer) (err error) {
@@ -159,13 +175,27 @@ func (cmd *queryCommand) Start(svc *cloudwatchlogs.CloudWatchLogs, flags *cli.Fl
 		return
 	}
 
-	result, err := waitQueryResult(svc, queryId)
+	resp, err := waitQueryResult(svc, queryId)
 
 	if err != nil {
 		return
 	}
 
-	printQueryResult(result, flags.Showptr, out)
+	if cmd.vertically {
+		printResultsVertically(resp.Results, flags.Showptr, out)
+	} else {
+		printResultsHorizontally(resp.Results, flags.Showptr, out)
+	}
+
+	fmt.Fprintf(out, "// Status: %s\n", *resp.Status)
+
+	fmt.Fprintf(
+		out,
+		"// Statistics: BytesScanned=%.f RecordsMatched=%.f RecordsScanned=%.f\n",
+		*resp.Statistics.BytesScanned,
+		*resp.Statistics.RecordsMatched,
+		*resp.Statistics.RecordsScanned,
+	)
 
 	return
 }

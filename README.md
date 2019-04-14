@@ -59,3 +59,28 @@ ap-northeast-1> source /aws/lambda/my-lambda start=2018/11/19 end=2019/11/21 | f
 $ cat output.jsonl
 {"@timestamp":"2019-04-09 09:38:19.455","@message":"2019-04-09T09:38:19.455Z\tab83228c-6af1-4c0b-a304-e043aecbe84a\tLogEC2InstanceStateChange\n"}
 ```
+
+### Print vertically
+
+```
+ap-northeast-1> source /aws/lambda/my-lambdaap-northeast-1> source /aws/lambda/test start=2018/11/19 end=2019/11/21 | field @timestamp, @message | limit 3 | vertically;
+*************************** 1. row ***************************
+@timestamp: 2019-04-09 09:38:19.455
+@message: REPORT RequestId: ab83228c-6af1-4c0b-a304-e043aecbe84a  Duration: 0.66 ms Billed Duration: 100 ms   Memory Size: 128 MB Max Memory Used: 48 MB
+
+*************************** 2. row ***************************
+@timestamp: 2019-04-09 09:38:19.455
+@message: 2019-04-09T09:38:19.455Z  ab83228c-6af1-4c0b-a304-e043aecbe84a  LogEC2InstanceStateChange
+
+*************************** 3. row ***************************
+@timestamp: 2019-04-09 09:38:19.455
+@message: 2019-04-09T09:38:19.455Z  ab83228c-6af1-4c0b-a304-e043aecbe84a  Received event: {
+  "version": "0",
+  "id": "4b22e040-e3dd-a0aa-84e0-a946526876a7",
+  "detail-type": "AWS API Call via CloudTrail",
+  "source": "aws.ec2",
+  "account": "822997939312",
+  "time": "2019-04-09T09:37:35Z",
+  "region": "ap-northeast-1",
+...
+```

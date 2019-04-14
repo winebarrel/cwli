@@ -140,8 +140,8 @@ func (cmd *headCommand) Start(svc *cloudwatchlogs.CloudWatchLogs, flags *cli.Fla
 
 	for i, event := range events {
 		fmt.Fprintf(out, "*************************** %d. row ***************************\n", i+1)
-		fmt.Fprintf(out, "Timestamp: %d\n", *event.Timestamp)
-		fmt.Fprintf(out, "Message: %s\n", *event.Message)
+		fmt.Fprintf(out, "Timestamp:\t%d\n", *event.Timestamp)
+		fmt.Fprintf(out, "Message:\t%s\n", *event.Message)
 	}
 
 	return
