@@ -63,7 +63,7 @@ $ cat output.jsonl
 ### Print vertically
 
 ```
-ap-northeast-1> source /aws/lambda/my-lambdaap-northeast-1> source /aws/lambda/test start=2018/11/19 end=2019/11/21 | field @timestamp, @message | limit 3 | vertically;
+ap-northeast-1> source /aws/lambda/my-lambda start=2018/11/19 end=2019/11/21 | field @timestamp, @message | limit 3 | vertically;
 *************************** 1. row ***************************
 @timestamp: 2019-04-09 09:38:19.455
 @message: REPORT RequestId: ab83228c-6af1-4c0b-a304-e043aecbe84a  Duration: 0.66 ms Billed Duration: 100 ms   Memory Size: 128 MB Max Memory Used: 48 MB
